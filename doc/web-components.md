@@ -38,21 +38,16 @@ Custom Element对外提供组件的标签，shadow DOM封装组件的内部结�
 + 又因为组件的隔离性加强，致力于建立前端组件化开发方式的各种框架/库（除Polymer外），在自己的组件实现方式与标准Web Components的结合，组件之间数据模型的同步等问题上，都遇到了不同寻常的挑战。
 + HTML imports和新的组件封装方式的使用，会导致之前常用的以JavaScript为主体的各类组件定义方式处境尴尬，它们的依赖、加载，都面临了新的挑战，而由于全局作用域的弱化，请求的合并变得困难得多
 
-## custom elements
+## Custom Elements
 
-#### 为什么要有这个概念
-+ 提供开发者一种可以自定义自己的 dom 元素的方式
-+ 使 web 应用的功能特性更易理解和描述
+custome elements 提供了开发者一种可以自定义自己的 dom 元素的方式，用语义化的定义使 web 应用本身的功能特性更易理解和描述。
 
-自定义元素的组成：
-
-+ 自定义元素类型（custom element type），要求是小写字母连字符
 + 本地名称 local name
 + 命名空间 namespace
 + 自定义元素原型对象（custome element prototype）
 + 生命周期（lifecycle callbacks）
 
-#### 创建自定义元素
+### 创建自定义元素
 ```js
 var MyElement =  document.registerElement('my-element');
 ```
@@ -64,6 +59,7 @@ var MyElement = document.registerElement('my-element', {
   prototype: Object.create(HTMLElement.prototype)
 });
 ```
+**自定义元素命名必须小写字母包含`-`，例如`x-foo` 合法，`tabs` 不合法**
 
 调用：
 
@@ -73,7 +69,6 @@ document.body.appendChild(new MyElement());
 ```html
 <my-element></my-element>
 ```
-**自定义元素命名必须包含`-`，例如`x-foo` 合法，`tabs` 不合法**
 
 ```js
 // "tabs" is not a valid custom element name
@@ -83,7 +78,7 @@ document.createElement('tabs').__proto__ === HTMLUnknownElement.prototype;
 document.createElement('x-foo').__proto__ == HTMLElement.prototype
 ```
 
-#### 自定义元素的继承
+### 自定义元素的继承
 
 原生元素扩展：
 
@@ -114,20 +109,22 @@ var MyElementExtend = document.registerElement('my-element-extend', {
 });
 ```
 
-#### 运行机制
+### 运行机制
 
-**todo: 栈的理解**
+在自定义元素的生命周期中，由如下变化会被监听：
 
-自定义元素的声明和创建可以在注册元素的注册之前，这是因为标准中用栈来管理运行整个自定义元素的过程
++ 自定义元素注册之前被创建
++ 自定义元素注册之后被创建
++ 自定义元素被插入或移除 dom 树中
++ 自定义元素的属性被创建、修改或删除
 
-声明式：
+以上每个条件被触发时，都会有对应的回调函数来处理，w3c 中对不同阶段的回调函数有详细的输入输出定义。
+
+自定义元素的注册是通过脚本执行来完成的，所以创建本身是可以在注册之前的，例如：
 
 ```html
 <my-element></my-element>
 ```
-
-js 创建：
-
 ```js
 var myElement = document.createElement('my-element');
 myElement.addEventListener('click', function(e) {
@@ -135,7 +132,34 @@ myElement.addEventListener('click', function(e) {
 });
 ```
 
-#### 更多属性的自定义元素
+这是因为浏览器会对未识别的元素归类为 unresolved ，在注册完成后提升为一个完整的元素。
+
+### callbacks 类型
++ createdCallback
++ attachedCallback
++ detachedCallback
++ attributeChangedCallback
+
+```js
+var proto = Object.create(HTMLElement.prototype);
+
+proto.createdCallback = function() {...};
+proto.attachedCallback = function() {...};
+
+var MyElement = document.registerElement('my-element', {prototype: proto});
+```
+
+回调大部分场景用于自定义元素中事件的绑定和销毁
+
+```js
+proto.createdCallback = function() {
+  this.addEventListener('click', function(e) {
+    alert('Thanks!');
+  });
+};
+```
+
+#### 自定义元素添加其他元素
 ```js
 var MyElement = document.registerElement('my-element', {
   prototype: Object.create(HTMLElement.prototype, {
@@ -149,33 +173,6 @@ var MyElement = document.registerElement('my-element', {
 });
 ```
 
-#### lifecycle callbacks
-+ createdCallback	an instance of the element is created
-+ attachedCallback	an instance was inserted into the document
-+ detachedCallback	an instance was removed from the document
-+ attributeChangedCallback(attrName, oldVal, newVal)	an attribute was added, removed, or updated
-
-```js
-var proto = Object.create(HTMLElement.prototype);
-
-proto.createdCallback = function() {...};
-proto.attachedCallback = function() {...};
-
-var MyElement = document.registerElement('my-element', {prototype: proto});
-```
-
-回调大部分场景用于事件的绑定和销毁
-
-```js
-proto.createdCallback = function() {
-  this.addEventListener('click', function(e) {
-    alert('Thanks!');
-  });
-};
-```
-
-#### 自定义元素添加其他元素
-
 ```js
 var MyElementProto = Object.create(HTMLElement.prototype);
 
@@ -186,7 +183,7 @@ MyElementProto.createdCallback = function() {
 var MyElement = document.registerElement('my-element', {prototype: XFooProto});
 ```
 
-### shadow dom
+## Shadow Dom
 
 > 灵活的自定义元素的出现，让我们可以通过自定义元素描述功能特性，问题是内部的dom 还是暴漏在dom 树中，如何解决这个问题呢？于是有了 `shodow dom`.
 
