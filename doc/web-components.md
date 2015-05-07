@@ -185,9 +185,9 @@ var MyElement = document.registerElement('my-element', {prototype: XFooProto});
 
 ## Shadow Dom
 
-> 灵活的自定义元素的出现，让我们可以通过自定义元素描述功能特性，问题是内部的dom 还是暴漏在dom 树中，如何解决这个问题呢？于是有了 `shodow dom`.
+> 灵活的自定义元素的出现，让我们可以通过自定义元素描述功能特性。问题是自定义元素内部的 dom 结构还是暴漏在文档流中，如何解决这个问题呢？于是有了 `shodow dom`。
 
-shadow dom 可以隐藏自定义元素内部的结构，隔离了外部对自定义元素的侵入性修改及探测。
+shadow dom 可以隐藏自定义元素内部的结构，隔离了外部对自定义元素内部 dom 结构的侵入性修改及探测。
 
 ```js
 var MyElementProto = Object.create(HTMLElement.prototype);
@@ -202,11 +202,132 @@ MyElementProto.createdCallback = function() {
 var MyElement = document.registerElement('my-element', {prototype: XFooProto});
 ```
 
-shadow dom 越负责，拼接的字符串就越多，这是一种混乱而且低效的使用方式，还会有额外的 xss 隐患。所以我们有了 `<template>`
+### 示例
+```html
+<div><h3>Light DOM</h3></div>
+```
+```js
+<script>
+var root = document.querySelector('div').createShadowRoot();
+root.innerHTML = '<style>h3{ color: red; }</style>' + 
+                 '<h3>Shadow DOM</h3>';
+</script>
+```
 
-### html template
+### 概念
++ shadow host 宿主
++ shadow tree
++ shadow root 宿主根节点
 
-> `<template>` 标签允许声明一段文档片段（dom fragments），是自定义元素的完整结构声明。标准的基于 dom 的客户端模版
+结合文档树做对比：
+
+```html
+<!-- shadow host -->
+<div>
+  <!-- shadow root -->
+  <p>
+    <h3>标题</h3>
+    <span>内容</span>
+  </p>
+</div>
+```
+
+### multiple shadow roots
+```html
+<div id="example1">Light DOM</div>
+```
+```js
+<script>
+var container = document.querySelector('#example1');
+var root1 = container.createShadowRoot();
+var root2 = container.createShadowRoot();
+var root3 = container.createShadowRoot();
+root1.innerHTML = '<div>Root 1 FTW</div>';
+root2.innerHTML = '<div>Root 2 FTW</div>';
+root3.innerHTML = '<div>Root 3 FTW</div>';
+</script>
+```
+
+shadow tree是可以叠加成shadow trees的，叠加后，后者shadow tree会覆盖前者
+
++ oldest shadow tree
++ youngest shadow tree
+
+![](http://gtms04.alicdn.com/tps/i4/TB1Ov6nHFXXXXbHaXXXEJDq2FXX-1742-1518.png)
+
+### 插入节点
+
+`<shadow></shadow>` ：
+
+shadow trees 的插入节点，一个 shadow tree 只插入第一个位置，其余忽略
+
+`<content></content>`：
+
+宿主节点子节点的插入节点
+
+```js
+// multiple shadow root
+var container = document.querySelector('#container');
+var root1 = container.createShadowRoot();
+var root2 = container.createShadowRoot();
+var root3 = container.createShadowRoot();
+
+// insert points
+root1.innerHTML = '<div>Root 1 FTW</div><content></content>';
+root2.innerHTML = '<shadow></shadow><div>Root 2 FTW</div><shadow></shadow>';
+root3.innerHTML = '<div>Root 3 FTW</div><shadow></shadow>';
+
+console.log(root3.olderShadowRoot === root2);
+// youngest shadow root
+console.log(container.shadowRoot === root3);
+console.log(root2.olderShadowRoot === root1);
+```
+
+`<content></content>` 将宿主节点的内容引入shadow dom中后，是不能通过 document 获取到的。
+
++ `getDistributedNodes`
++ `getDestinationInsertionPoints`
+
+### 事件模型
+
++ abort
++ error
++ select
++ change
++ load
++ reset
++ resize
++ scroll
++ selectstart
+
+### 样式
+
+shadow dom 中的样式中作用于 shadow dom 的域，与外界隔离。
+
+伪类：
+
++ `:host` 作用于宿主元素，or `:host(<selector>) `
++ `:host-context` 
+
+```html
+<body class="different">
+  <x-foo></x-foo>
+</body>
+```
+```css
+:host-context(.different) {
+  color: red;
+}
+```
++ `::shadow` 作用于 shadow dom 中内部的 shadow tree 中的元素
++ `/deep/` 可以打破所有 shadow dom 的边界，多用于多级 shadow dom 的下，设置样式
++ `::content` 伪类提供了对 shadow dom 中宿主元素插入节点内的样式的获取
+
+## Html Template
+
+shadow dom 越复杂，拼接的字符串就越多，这是一种混乱而且低效的使用方式，还会有额外的 xss 隐患。所以我们有了 `<template>`
+
+> `<template>` 标签允许声明一段文档片段（dom fragments），是自定义元素的完整结构声明，标准的基于 dom 的客户端模版。
 
 `<tempalete>` 的 content 不会被浏览器渲染和执行（包括里面的script 和 style），也不会存在于 dom 树中。
 
@@ -225,13 +346,7 @@ document.body.appendChild(clone);
 
 需要注意嵌套模版，父模版激活不会影响子模版，子模版要手动激活。
 
-### html imports
-
-## about latest framework
-冷知识装逼利器二：
-
-### ploymer
-[](http://blog.coding.net/blog/front-end-application-based-on-Polymer)
+## html imports
 
 
 ## 参考
@@ -239,5 +354,8 @@ document.body.appendChild(clone);
 + [w3c web components](http://www.w3.org/TR/#tr_Web_Components)
 + [2015前端组件化框架之路](https://github.com/xufei/blog/issues/19)
 + [Custom Elements](http://www.html5rocks.com/en/tutorials/webcomponents/customelements/#publicapi)
-+ [html template](http://www.html5rocks.com/en/tutorials/webcomponents/template/)
-+ [shadow dom](http://www.html5rocks.com/en/tutorials/webcomponents/shadowdom-201/)
++ [Shadow Dom 101](http://www.html5rocks.com/en/tutorials/webcomponents/shadowdom/)
++ [Shadow Dom 201](http://www.html5rocks.com/en/tutorials/webcomponents/shadowdom-201/)
++ [Shadow Dom 301](http://www.html5rocks.com/en/tutorials/webcomponents/shadowdom-301/)
++ [Html Template](http://www.html5rocks.com/en/tutorials/webcomponents/template/)
+
