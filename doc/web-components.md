@@ -224,7 +224,7 @@ root.innerHTML = '<style>h3{ color: red; }</style>' +
 ```html
 <!-- shadow host -->
 <div>
-  <!-- shadow root -->
+  <!-- shadow tree -->
   <p>
     <h3>标题</h3>
     <span>内容</span>
