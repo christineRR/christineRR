@@ -290,6 +290,10 @@ console.log(root2.olderShadowRoot === root1);
 
 ### 事件模型
 
+shadow dom 子树中的事件可以在文档（document）中被监听，但是在事件在穿过 shadow dom 边界的时候，触发事件的target 会被重新设置，以免暴露 shadow dom 中的内部结构。
+
+但是以下事件会被阻止：
+
 + abort
 + error
 + select
@@ -329,11 +333,9 @@ shadow dom 越复杂，拼接的字符串就越多，这是一种混乱而且低
 
 > `<template>` 标签允许声明一段文档片段（dom fragments），是自定义元素的完整结构声明，标准的基于 dom 的客户端模版。
 
-`<tempalete>` 的 content 不会被浏览器渲染和执行（包括里面的script 和 style），也不会存在于 dom 树中。
+### 激活模版
 
-#### 激活模版
-
-模版本身是不可能被与加载的，模版内容的渲染和执行只能通过以下激活的方式：
+默认浏览器是不会渲染模版内容的，模版内容的渲染和执行只能通过以下激活的方式：
 
 ```js
 var t = document.querySelector('#mytemplate');
@@ -348,6 +350,11 @@ document.body.appendChild(clone);
 
 ## html imports
 
+>  `import` 特性提供了以link方式来导入一段html文本的功能,相当于是template的进化版,方便做成模板文件
+
+```html
+<link rel="import" href="import.html">
+```
 
 ## 参考
 
