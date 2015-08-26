@@ -28,3 +28,6 @@ liuxin.rkl@alibaba
 
 10、[webpack](https://github.com/christineRR/christineRR/blob/master/doc/webpack.md) 
 
+11、[web components](http://christinerr.github.io/web-components.html#/)
+
+
