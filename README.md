@@ -30,4 +30,5 @@ liuxin.rkl@alibaba
 
 11、[web components](http://christinerr.github.io/web-components.html#/)
 
+12、[React Virtual Dom](https://github.com/christineRR/christineRR/blob/master/doc/react-virtual-dom.md)
 
